@@ -1,54 +1,60 @@
-import React, { Component } from 'react';
+/* eslint-disable react/prop-types */
+import React, { useEffect, useState } from 'react';
 
 import Image from '../../../components/Image/Image';
 import './SinglePost.css';
 
-class SinglePost extends Component {
-  state = {
+const SinglePost = ({
+  match: {
+    params: { postId },
+  },
+}) => {
+  const [post, setPostValues] = useState({
     title: '',
     author: '',
     date: '',
     image: '',
-    content: ''
-  };
+    content: '',
+  });
 
-  componentDidMount() {
-    const postId = this.props.match.params.postId;
-    fetch(`http://localhost:8080/feed/post/${postId}`)
-      .then(res => {
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch status');
-        }
-        return res.json();
-      })
-      .then(resData => {
-        console.log('ressss-single', resData)
-        this.setState({
-          title: resData.post.title,
-          author: resData.post.creator.name,
-          date: new Date(resData.post.createdAt).toLocaleDateString('en-US'),
-          content: resData.post.content
+  useEffect(() => {
+    async function FetchData() {
+      await fetch(`http://localhost:8080/feed/post/${postId}`)
+        .then(res => {
+          if (res.status !== 200) {
+            throw new Error('Failed to fetch status');
+          }
+          return res.json();
+        })
+        .then(resData => {
+          console.log('sjsjsjsjsjsj', resData);
+
+          setPostValues({
+            title: resData.post.title,
+            author: resData.post.name,
+            date: new Date(resData.post.createdAt).toLocaleDateString('en-US'),
+            content: resData.post.content,
+          });
         });
-      })
-      .catch(err => {
-        console.log(err);
-      });
-  }
+    }
 
-  render() {
-    return (
-      <section className="single-post">
-        <h1>{this.state.title}</h1>
-        <h2>
-          Created by {this.state.author} on {this.state.date}
-        </h2>
-        <div className="single-post__image">
-          <Image contain imageUrl={this.state.image} />
-        </div>
-        <p>{this.state.content}</p>
-      </section>
-    );
-  }
-}
+    FetchData();
+  }, [postId]);
+
+  const { title, date, author, image, content } = post;
+  console.log('state', post);
+  return (
+    <section className="single-post">
+      <h1>{title}</h1>
+      <h2>
+        Created by {author} on {date}
+      </h2>
+      <div className="single-post__image">
+        <Image contain imageUrl={image} />
+      </div>
+      <p>{content}</p>
+    </section>
+  );
+};
 
 export default SinglePost;
