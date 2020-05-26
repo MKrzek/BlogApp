@@ -27,11 +27,11 @@ const SinglePost = ({
           return res.json();
         })
         .then(resData => {
-          console.log('sjsjsjsjsjsj', resData);
 
           setPostValues({
             title: resData.post.title,
             author: resData.post.name,
+            image: `http://localhost:8080/${resData.post.imageUrl}`,
             date: new Date(resData.post.createdAt).toLocaleDateString('en-US'),
             content: resData.post.content,
           });
@@ -42,7 +42,7 @@ const SinglePost = ({
   }, [postId]);
 
   const { title, date, author, image, content } = post;
-  console.log('state', post);
+
   return (
     <section className="single-post">
       <h1>{title}</h1>
