@@ -4,12 +4,21 @@ const Post = require('../models/post');
 const clearImage = require('../utils/removeImage');
 
 const getPosts = (req, res, next) => {
+  const { page } = req.query || 1;
+  const perPage = 2;
+  let totalItems;
   Post.find()
+    .countDocuments()
+    .then(count => {
+      totalItems = count;
+      return Post.find()
+        .skip((page - 1) * perPage)
+        .limit(perPage);
+    })
     .then(posts => {
-      res.status(200).json({ posts });
+      res.status(200).json({ posts, totalItems });
     })
     .catch(err => {
-      console.log(err);
       if (!err.statusCode) {
         err.statusCode = 500;
       }

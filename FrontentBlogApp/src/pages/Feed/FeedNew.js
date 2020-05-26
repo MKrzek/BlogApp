@@ -11,7 +11,7 @@ import './Feed.css';
 const Feed = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [posts, setPosts] = useState([]);
-  const [totalPosts, setTotalposts] = useState(0);
+  const [totalPosts, setTotalPosts] = useState(0);
   const [editPost, setEditPost] = useState('');
   const [status, setStatus] = useState('');
   const [postPage, setPostPage] = useState(1);
@@ -38,7 +38,7 @@ const Feed = () => {
         page--;
         setPostPage(page);
       }
-      await fetch('http://localhost:8080/feed/posts')
+      await fetch(`http://localhost:8080/feed/posts?page=${page}`)
         .then(res => {
           if (res.status !== 200) {
             throw new Error('Failed to fetch posts.');
@@ -46,15 +46,14 @@ const Feed = () => {
           return res.json();
         })
         .then(resData => {
-          console.log('resssss-fronted', resData.posts);
-          setPosts(()=>resData.posts.map(post=>({...post, imageUrl: post.imageUrl})));
-          setTotalposts(resData.posts.length);
+          setPosts(prevState=>resData.posts.map(post=>({...post, imageUrl: post.imageUrl})));
+          setTotalPosts(resData.totalItems);
           setPostsLoading(false);
 
         })
         .catch(catchError)
     },
-    [postPage, totalPosts]
+    [postPage, totalPosts, postsLoading, setPosts, setTotalPosts, setPostsLoading, setPostPage, postPage, setError,]
   );
 
   useEffect(() => {
@@ -96,8 +95,6 @@ const Feed = () => {
   };
 
   const startEditPostHandler = postId => {
-    console.log('postId', postId);
-    console.log('posts-in start', posts);
 
     setEditPost(prevState => ({...posts.find(p => p._id === postId) }
       ))
@@ -138,15 +135,13 @@ const Feed = () => {
       body: formData,
     })
       .then(res => {
-
-
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Creating or editing a post failed!');
         }
         return res.json();
       })
       .then(resData => {
-        console.log('edited-from-backend ', resData);
+
         const post = {
           _id: resData.post._id,
           title: resData.post.title,
@@ -198,14 +193,14 @@ const Feed = () => {
     setPostsLoading(true);
     fetch(`http://localhost:8080/feed/post/${postId}`, { method:"DELETE"})
       .then(res => {
-        console.log('resssss-after-delete', res)
+
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Deleting a post failed!');
         }
         return res.json();
       })
       .then(resData => {
-        console.log('rrssss-deleteing', resData);
+
         setPosts(prevState => prevState.filter(p => p._id !== postId)
         );
         setPostsLoading(false);
@@ -260,6 +255,7 @@ const Feed = () => {
         {posts.length <= 0 && !postsLoading ? (
           <p style={{ textAlign: 'center' }}>No posts found.</p>
         ) : null}
+
       {!postsLoading && (
         <Paginator
           onPrevious={()=>loadPosts('previous')}
