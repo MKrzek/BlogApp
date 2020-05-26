@@ -66,7 +66,6 @@ const createPost = (req, res, next) => {
     .save()
     .then(result => {
       // Create post in db
-      console.log('result', result);
       res.status(201).json({ post: result });
     })
     .catch(err => {
@@ -112,10 +111,11 @@ const updatePost = (req, res, next) => {
       post.imageUrl = imageUrl;
       post.content = content;
 
-      return post.save().then(result => {
-        console.log('XXXXXXXXupdated postXXXXXXXX', post);
-        return res.status(200).json({ message: 'Post updated!', post: result });
-      });
+      return post
+        .save()
+        .then(result =>
+          res.status(200).json({ message: 'Post updated!', post: result })
+        );
     })
     .catch(err => {
       if (!err.statusCode) {
@@ -124,5 +124,35 @@ const updatePost = (req, res, next) => {
       next(err);
     });
 };
+const deletePost = (req, res, next) => {
+  const { postId } = req.params;
+  console.log('id', postId);
+  Post.findById(postId)
+    .then(post => {
+      if (!post) {
+        const error = new Error('Could not find post!');
+        error.statusCode = 404;
+        throw error;
+      }
+      clearImage(post.imageUrl);
+      return Post.findByIdAndRemove(postId);
+    })
+    .then(result => {
+      console.log('sksksskksks', result);
+      res.status(200).json({ message: 'Deleted post' });
+    })
 
-module.exports = { createPost, getPosts, getSinglePost, updatePost };
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+module.exports = {
+  createPost,
+  getPosts,
+  getSinglePost,
+  updatePost,
+  deletePost,
+};

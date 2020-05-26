@@ -112,7 +112,7 @@ const Feed = () => {
 
   const cancelEditHandler = () => {
     setIsEditing(false);
-    console.log('issssssEd', isEditing)
+
     setEditPost(null);
   };
 
@@ -196,21 +196,20 @@ const Feed = () => {
 
   const deletePostHandler = postId => {
     setPostsLoading(true);
-    fetch('URL')
+    fetch(`http://localhost:8080/feed/post/${postId}`, { method:"DELETE"})
       .then(res => {
+        console.log('resssss-after-delete', res)
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Deleting a post failed!');
         }
         return res.json();
       })
       .then(resData => {
-        console.log(resData);
-        setPosts(prevState => {
-          const updatedPosts = prevState.posts.filter(p => p._id !== postId);
-          setPosts(updatedPosts);
-          setPostsLoading(false);
-          return { posts, postsLoading };
-        });
+        console.log('rrssss-deleteing', resData);
+        setPosts(prevState => prevState.filter(p => p._id !== postId)
+        );
+        setPostsLoading(false);
+        return { posts, postsLoading };
       })
       .catch(err => {
         console.log(err);
