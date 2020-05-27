@@ -8,7 +8,7 @@ import Loader from '../../components/Loader/Loader';
 import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
 import './Feed.css';
 
-const Feed = ({token}) => {
+const Feed = ({ token }) => {
 
   const [isEditing, setIsEditing] = useState(false);
   const [posts, setPosts] = useState([]);
@@ -40,24 +40,23 @@ const Feed = ({token}) => {
         page--;
         setPostPage(page);
       }
-      await fetch(`http://localhost:8080/feed/posts?page=${page}`, {
-        headers: {
-          Authorization: `Bearer${' '}${token}`
-        }
-      })
-        .then(res => {
-          if (res.status !== 200) {
-            throw new Error('Failed to fetch posts.');
+      try {
+        const res = await fetch(`http://localhost:8080/feed/posts?page=${page}`, {
+          headers: {
+            Authorization: `Bearer${' '}${token}`
           }
-          return res.json();
         })
-        .then(resData => {
-          setPosts(prevState=>resData.posts.map(post=>({...post, imageUrl: post.imageUrl})));
-          setTotalPosts(resData.totalItems);
-          setPostsLoading(false);
 
-        })
-        .catch(catchError)
+        if (res.status !== 200) {
+          throw new Error('Failed to fetch posts.');
+        }
+        const resData = await res.json();
+
+  setPosts(prevState => resData.posts.map(post => ({ ...post, imageUrl: post.imageUrl })));
+  setTotalPosts(resData.totalItems);
+  setPostsLoading(false);
+}
+catch(err){catchError()}
     },
     [token, postPage, totalPosts, postsLoading, setPosts, setTotalPosts, setPostsLoading, setPostPage, postPage, setError,]
   );
@@ -85,28 +84,29 @@ const Feed = ({token}) => {
     fetchData();
   }, [token]);
 
-  const statusUpdateHandler = event => {
+  const statusUpdateHandler = async event => {
     console.log('statussssss', status)
     event.preventDefault();
-    fetch('http://localhost:8080/auth/status', {
-      method: "PUT",
-      headers: {
-        'Content-Type': "application/json",
-        Authorization: `Bearer${' '}${token}`
-      },
-      body:JSON.stringify({status})
-    })
-      .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error("Can't update status!");
-        }
-        return res.json();
+    try {
+      const res = await fetch('http://localhost:8080/auth/status', {
+        method: "PUT",
+        headers: {
+          'Content-Type': "application/json",
+          Authorization: `Bearer${' '}${token}`
+        },
+        body: JSON.stringify({ status })
       })
-      .then(resData => {
-        console.log(resData);
-      })
-      .catch(catchError);
-  };
+
+      if (res.status !== 200 && res.status !== 201) {
+        throw new Error("Can't update status!");
+      }
+      const resData = await res.json();
+      console.log(resData);
+    }
+
+
+      catch (err) { catchError() }
+  }
 
   const newPostHandler = () => {
     setIsEditing(true);
@@ -131,7 +131,7 @@ const Feed = ({token}) => {
     setEditPost(null);
   };
 
-  const finishEditHandler = ({ title, content, image }) => {
+  const finishEditHandler = async ({ title, content, image }) => {
 
 
     setEditLoading(true);
@@ -147,21 +147,18 @@ const Feed = ({token}) => {
       url = `http://localhost:8080/feed/post/${editPost._id}`;
       method = "PUT"
     }
-
-    fetch(url, {
+    try{
+    const res = await fetch(url, {
       method,
       body: formData,
       headers: {
         Authorization: `Bearer${' '}${token}`
       }
     })
-      .then(res => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Creating or editing a post failed!');
         }
-        return res.json();
-      })
-      .then(resData => {
+        const resData= await  res.json();
 
         const post = {
           _id: resData.post._id,
@@ -177,7 +174,6 @@ const Feed = ({token}) => {
            updatedPosts = [...prevState];
           if (editPost) {
             const postIndex = prevState.findIndex(p => p._id === editPost._id);
-
             updatedPosts[postIndex] = post;
 
           } else  {
@@ -195,15 +191,14 @@ const Feed = ({token}) => {
             editPost,
             editLoading,
           };
-
-      })
-      .catch(err => {
+      }
+      catch(err) {
         console.log(err);
         setIsEditing(false);
         setEditPost(null);
         setEditLoading(false);
         setError(err);
-      });
+      }
   };
 
   const statusInputChangeHandler = (input, value) => {
@@ -211,31 +206,27 @@ const Feed = ({token}) => {
     setStatus(value);
   };
 
-  const deletePostHandler = postId => {
+  const deletePostHandler = async postId => {
     setPostsLoading(true);
-    fetch(`http://localhost:8080/feed/post/${postId}`, {
+    try{
+    const res = await fetch(`http://localhost:8080/feed/post/${postId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer${' '}${token}`
       }})
-      .then(res => {
-
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Deleting a post failed!');
         }
-        return res.json();
-      })
-      .then(resData => {
-
+        const resData = await res.json();
         setPosts(prevState => prevState.filter(p => p._id !== postId)
         );
         setPostsLoading(false);
         return { posts, postsLoading };
-      })
-      .catch(err => {
+      }
+      catch(err) {
         console.log(err);
         setPostsLoading(false);
-      });
+      };
   };
 
   const errorHandler = () => {
@@ -244,7 +235,6 @@ const Feed = ({token}) => {
 
   return (
     <>
-
       <ErrorHandler error={error} onHandle={errorHandler} />
       <FeedEdit
         editing={isEditing}

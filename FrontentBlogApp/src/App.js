@@ -69,10 +69,12 @@ const App = (props) => {
   };
 
 
-  const loginHandler = (event, { email, password }) => {
+  const loginHandler = async (event, { email, password }) => {
     event.preventDefault();
     setAuthLoading(true);
-    fetch('http://localhost:8080/auth/login', {
+    try {
+
+    const res = await fetch('http://localhost:8080/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': "application/json"
@@ -82,7 +84,7 @@ const App = (props) => {
         password: password
       })
     })
-      .then(res => {
+
         if (res.status === 422) {
           throw new Error('Validation failed.');
         }
@@ -90,9 +92,7 @@ const App = (props) => {
           console.log('Error!');
           throw new Error('Could not authenticate you!');
         }
-        return res.json();
-      })
-      .then(resData => {
+       const resData = await res.json();
         setIsAuth(true)
         setToken(resData.token)
         setAuthLoading(false)
@@ -106,21 +106,22 @@ const App = (props) => {
         );
         localStorage.setItem('expiryDate', expiryDate.toISOString());
         setAutoLogout(remainingMilliseconds);
-      })
-      .catch(err => {
+      }
+      catch(err ) {
         console.log(err);
         setIsAuth(false)
         setAuthLoading(false)
         setError(err)
-      });
+      }
   };
 
-  const signupHandler = (event, { signupForm: { email, password, name } }) => {
+  const signupHandler = async (event, { signupForm: { email, password, name } }) => {
 
     event.preventDefault();
     setAuthLoading(true);
 
-    fetch('http://localhost:8080/auth/signup', {
+  try {
+    const res = await fetch('http://localhost:8080/auth/signup', {
       method: 'PUT',
       headers: { 'Content-Type': "application/json" },
       body: JSON.stringify({
@@ -129,39 +130,32 @@ const App = (props) => {
         name: name.value
       })
     })
-      .then(res => {
-        if (res.status === 422) {
-          throw new Error(
-            "Validation failed. Make sure the email address isn't used yet!"
-          );
-        }
-        if (res.status !== 200 && res.status !== 201) {
-          console.log('Error!');
-          throw new Error('Creating a user failed!');
-        }
-        return res.json();
-      })
-      .then(resData => {
-        console.log(resData);
-        setIsAuth(false)
-        setAuthLoading(false)
-        props.history.replace('/');
-      })
-      .catch(err => {
+      if (res.status === 422) {
+        throw new Error(
+          "Validation failed. Make sure the email address isn't used yet!"
+        );
+      }
+      if (res.status !== 200 && res.status !== 201) {
+        console.log('Error!');
+        throw new Error('Creating a user failed!');
+      }
+      const resData = await res.json();
+      console.log(resData);
+      setIsAuth(false)
+      setAuthLoading(false)
+      props.history.replace('/');
+      }
+      catch(err) {
         console.log(err);
         setIsAuth(false)
         setAuthLoading(false)
         setError(err)
-
-      });
+      }
   };
-
-
 
   const errorHandler = () => {
     setError(null);
   };
-
 
   let routes = (
     <Switch>
