@@ -8,7 +8,8 @@ import Loader from '../../components/Loader/Loader';
 import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
 import './Feed.css';
 
-const Feed = (props) => {
+const Feed = ({token}) => {
+
   const [isEditing, setIsEditing] = useState(false);
   const [posts, setPosts] = useState([]);
   const [totalPosts, setTotalPosts] = useState(0);
@@ -18,6 +19,7 @@ const Feed = (props) => {
   const [postsLoading, setPostsLoading] = useState(true);
   const [editLoading, setEditLoading] = useState(false);
   const [error, setError] = useState(null);
+
 
   const catchError = error => {
     setError(error);
@@ -38,9 +40,10 @@ const Feed = (props) => {
         page--;
         setPostPage(page);
       }
+      console.log('feeeeeed-toekn', token)
       await fetch(`http://localhost:8080/feed/posts?page=${page}`, {
         headers: {
-          Authorization: `Bearer${' '}${props.token}`
+          Authorization: `Bearer${' '}${token}`
         }
       })
         .then(res => {
@@ -57,16 +60,18 @@ const Feed = (props) => {
         })
         .catch(catchError)
     },
-    [postPage, totalPosts, postsLoading, setPosts, setTotalPosts, setPostsLoading, setPostPage, postPage, setError,]
+    [token, postPage, totalPosts, postsLoading, setPosts, setTotalPosts, setPostsLoading, setPostPage, postPage, setError,]
   );
 
   useEffect(() => {
     async function fetchData() {
+      console.log('statussss', token)
       await fetch('http://localhost:8080/auth/status', {
         headers: {
-          Authorization: `Bearer${' '}${props.token}`
+          Authorization: `Bearer${' '}${token}`
         }})
         .then(res => {
+          console.log('res-status', res)
           if (res.status !== 200) {
             throw new Error('Failed to fetch user status.');
           }
@@ -81,7 +86,7 @@ const Feed = (props) => {
     }
     loadPosts()
     fetchData();
-  }, []);
+  }, [token]);
 
   const statusUpdateHandler = event => {
     console.log('statussssss', status)
@@ -90,7 +95,7 @@ const Feed = (props) => {
       method: "PUT",
       headers: {
         'Content-Type': "application/json",
-        Authorization: `Bearer${' '}${props.token}`
+        Authorization: `Bearer${' '}${token}`
       },
       body:JSON.stringify({status})
     })
@@ -150,7 +155,7 @@ const Feed = (props) => {
       method,
       body: formData,
       headers: {
-        Authorization: `Bearer${' '}${props.token}`
+        Authorization: `Bearer${' '}${token}`
       }
     })
       .then(res => {
@@ -214,7 +219,7 @@ const Feed = (props) => {
     fetch(`http://localhost:8080/feed/post/${postId}`, {
       method: "DELETE",
       headers: {
-        Authorization: `Bearer${' '}${props.token}`
+        Authorization: `Bearer${' '}${token}`
       }})
       .then(res => {
 
