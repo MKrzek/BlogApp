@@ -5,6 +5,7 @@ import Image from '../../../components/Image/Image';
 import './SinglePost.css';
 
 const SinglePost = ({
+  token,
   match: {
     params: { postId },
   },
@@ -19,7 +20,10 @@ const SinglePost = ({
 
   useEffect(() => {
     async function FetchData() {
-      await fetch(`http://localhost:8080/feed/post/${postId}`)
+      await fetch(`http://localhost:8080/feed/post/${postId}`, {
+        headers: {
+          Authorization: `Bearer${' '}${token}`
+        }})
         .then(res => {
           if (res.status !== 200) {
             throw new Error('Failed to fetch status');
