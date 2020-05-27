@@ -40,7 +40,6 @@ const Feed = ({token}) => {
         page--;
         setPostPage(page);
       }
-      console.log('feeeeeed-toekn', token)
       await fetch(`http://localhost:8080/feed/posts?page=${page}`, {
         headers: {
           Authorization: `Bearer${' '}${token}`
@@ -65,13 +64,11 @@ const Feed = ({token}) => {
 
   useEffect(() => {
     async function fetchData() {
-      console.log('statussss', token)
       await fetch('http://localhost:8080/auth/status', {
         headers: {
           Authorization: `Bearer${' '}${token}`
         }})
         .then(res => {
-          console.log('res-status', res)
           if (res.status !== 200) {
             throw new Error('Failed to fetch user status.');
           }
