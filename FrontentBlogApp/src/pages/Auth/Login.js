@@ -44,7 +44,7 @@ const Login = ({ loading, onLogin })=> {
 
        formIsValid = formIsValid && updatedForm[inputName].valid;
      }
-       updatedForm[formIsValid]= formIsValid
+       updatedForm['formIsValid']= formIsValid
 
      return updatedForm
    })
