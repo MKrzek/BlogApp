@@ -1,6 +1,7 @@
 const { validationResult } = require('express-validator');
 
 const Post = require('../models/post');
+const User = require('../models/user');
 const clearImage = require('../utils/removeImage');
 
 const getPosts = (req, res, next) => {
@@ -28,6 +29,7 @@ const getPosts = (req, res, next) => {
 
 const getSinglePost = (req, res, next) => {
   const { postId } = req.params;
+
   Post.findById(postId)
     .then(post => {
       if (!post) {
@@ -61,21 +63,31 @@ const createPost = (req, res, next) => {
   }
 
   const { title, content } = req.body;
+  let creator;
 
   const post = new Post({
     title,
     imageUrl: req.file.path,
     content,
-
-    creator: {
-      name: 'xxxx',
-    },
+    creator: req.userId,
   });
   post
     .save()
-    .then(result => {
+    .then(result =>
       // Create post in db
-      res.status(201).json({ post: result });
+      User.findById(req.userId)
+    )
+    .then(user => {
+      creator = user;
+      user.posts.push(post);
+      return user.save();
+    })
+    .then(result => {
+      res.status(201).json({
+        message: 'Post created successfully!',
+        post,
+        creator: { _id: creator._id, name: creator.name },
+      });
     })
     .catch(err => {
       console.log(err);
@@ -101,6 +113,7 @@ const updatePost = (req, res, next) => {
   if (req.file) {
     imageUrl = req.file.path;
   }
+
   if (!imageUrl) {
     const error = new Error('no file picked');
     error.statusCode = 422;
@@ -111,6 +124,11 @@ const updatePost = (req, res, next) => {
       if (!post) {
         const error = new Error('Could not find post!');
         error.statusCode = 404;
+        throw error;
+      }
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error('Not authorized');
+        error.statusCode(403);
         throw error;
       }
       if (imageUrl !== post.imageUrl) {
@@ -141,6 +159,11 @@ const deletePost = (req, res, next) => {
       if (!post) {
         const error = new Error('Could not find post!');
         error.statusCode = 404;
+        throw error;
+      }
+      if (post.creator.toString() !== req.userId) {
+        const error = new Error('Not authorized');
+        error.statusCode(403);
         throw error;
       }
       clearImage(post.imageUrl);
