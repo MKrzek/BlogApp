@@ -40,15 +40,16 @@ const FeedEdit = ({ onFinishEdit, editing, selectedPost, onCancelEdit,loading })
     const previousSelectedPost = usePrevious(selectedPost)
 
 
-    useEffect(()=>{
-        if ((previousStateEdting && !isEqual(previousStateEdting, editing))
+    useEffect(() => {
+        if ((selectedPost && (!isEqual(previousStateEdting, editing)))
              &&
-            (previousSelectedPost && !isEqual(previousSelectedPost, selectedPost)))
+            (selectedPost && (!isEqual(previousSelectedPost, selectedPost)))
+        )
         {
            const x = {
                 title: {
                     ...postForm.title,
-                    value: selectedPost.title,
+                    value:  selectedPost.title,
                     valid: true
                 },
                 image: {
@@ -67,7 +68,7 @@ const FeedEdit = ({ onFinishEdit, editing, selectedPost, onCancelEdit,loading })
             setFormIsValid(true)
         }
 
-   },[postForm, setPostForm, setFormIsValid, formIsValid,])
+   },[postForm, setPostForm, setFormIsValid, formIsValid, selectedPost, editing])
 
     const postInputChangeHandler = (input, value, files) => {
         if (files) {
@@ -144,10 +145,9 @@ const FeedEdit = ({ onFinishEdit, editing, selectedPost, onCancelEdit,loading })
 
     return (editing ? (
         <>
-            {console.log('postForm -in -render', postForm)}
             <Backdrop onClick={cancelPostChangeHandler} />
             <Modal
-                title="New Post"
+                title={editing? 'Edit Post': 'New Post'}
                 acceptEnabled={formIsValid}
                 onCancelModal={cancelPostChangeHandler}
                 onAcceptModal={acceptPostChangeHandler}
