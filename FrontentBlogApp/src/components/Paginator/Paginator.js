@@ -3,9 +3,8 @@ import React from 'react';
 import './Paginator.css';
 
 const paginator = ({ children, onPrevious, onNext, currentPage, lastPage }) => {
-  console.log('skssksksk paffff', currentPage, lastPage, onNext, onPrevious )
-  return (
 
+  return (
     <div className="paginator">
       {children}
       <div className="paginator__controls">
