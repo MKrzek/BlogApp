@@ -72,5 +72,51 @@ const login = (req, res, next) => {
       next(err);
     });
 };
+const getStatus = (req, res, next) => {
+  const { userId } = req;
 
-module.exports = { signup, login };
+  return User.findById(userId)
+    .then(user => {
+      if (!user) {
+        const error = new Error('User not found');
+        error.statusCode(404);
+        throw error;
+      }
+      console.log('user', user);
+      res.status(200).json({ status: user.status });
+    })
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+
+const changeStatus = (req, res, next) => {
+  const { userId } = req;
+  const { status } = req.body;
+  console.log('userId', userId);
+  console.log('reqbody', req.body);
+  User.findById(userId)
+    .then(user => {
+      if (!user) {
+        const error = new Error('User with email has not been found');
+        error.statusCode = 401;
+        throw error;
+      }
+      user.status = status;
+      return user.save();
+    })
+    .then(result => {
+      res.status(200).json({ message: 'User status updated' });
+    })
+    .catch(err => {
+      if (!err.statusCode) {
+        err.statusCode = 500;
+      }
+      next(err);
+    });
+};
+
+module.exports = { signup, login, getStatus, changeStatus };
