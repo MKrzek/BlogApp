@@ -8,7 +8,7 @@ import Loader from '../../components/Loader/Loader';
 import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
 import './Feed.css';
 
-const Feed = () => {
+const Feed = (props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [posts, setPosts] = useState([]);
   const [totalPosts, setTotalPosts] = useState(0);
@@ -38,7 +38,11 @@ const Feed = () => {
         page--;
         setPostPage(page);
       }
-      await fetch(`http://localhost:8080/feed/posts?page=${page}`)
+      await fetch(`http://localhost:8080/feed/posts?page=${page}`, {
+        headers: {
+          Authorization: `Bearer${' '}${props.token}`
+        }
+      })
         .then(res => {
           if (res.status !== 200) {
             throw new Error('Failed to fetch posts.');
@@ -58,7 +62,10 @@ const Feed = () => {
 
   useEffect(() => {
     async function fetchData() {
-      await fetch('URL')
+      await fetch('http://localhost:8080/auth/status', {
+        headers: {
+          Authorization: `Bearer${' '}${props.token}`
+        }})
         .then(res => {
           if (res.status !== 200) {
             throw new Error('Failed to fetch user status.');
@@ -67,6 +74,7 @@ const Feed = () => {
 
         })
         .then(resData => {
+          console.log('status', resData)
           setStatus(resData.status);
         })
         .catch(catchError);
@@ -76,8 +84,16 @@ const Feed = () => {
   }, []);
 
   const statusUpdateHandler = event => {
+    console.log('statussssss', status)
     event.preventDefault();
-    fetch('URL')
+    fetch('http://localhost:8080/auth/status', {
+      method: "PUT",
+      headers: {
+        'Content-Type': "application/json",
+        Authorization: `Bearer${' '}${props.token}`
+      },
+      body:JSON.stringify({status})
+    })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
           throw new Error("Can't update status!");
@@ -133,6 +149,9 @@ const Feed = () => {
     fetch(url, {
       method,
       body: formData,
+      headers: {
+        Authorization: `Bearer${' '}${props.token}`
+      }
     })
       .then(res => {
         if (res.status !== 200 && res.status !== 201) {
@@ -186,12 +205,17 @@ const Feed = () => {
   };
 
   const statusInputChangeHandler = (input, value) => {
+    console.log('status', value)
     setStatus(value);
   };
 
   const deletePostHandler = postId => {
     setPostsLoading(true);
-    fetch(`http://localhost:8080/feed/post/${postId}`, { method:"DELETE"})
+    fetch(`http://localhost:8080/feed/post/${postId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer${' '}${props.token}`
+      }})
       .then(res => {
 
         if (res.status !== 200 && res.status !== 201) {
@@ -263,7 +287,7 @@ const Feed = () => {
           lastPage={Math.ceil(totalPosts / 2)}
           currentPage={postPage}
           >
-
+        {console.log('posts', posts)}
       {posts.map(post => <Post
         key={post._id}
         id={post._id}
