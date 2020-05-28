@@ -1,13 +1,16 @@
 const express = require('express');
+const app = require('express')();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
 const multer = require('multer');
+const http = require('http').createServer(app);
+// const io = require('socket.io')(http);
 
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
 
-const app = express();
+// const app = express();
 
 const fileStorage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -67,7 +70,13 @@ mongoose
   )
   .then(() => {
     console.log('connected to Mongo');
-    app.listen(8080);
+
+    // http.listen(8080);
+    // eslint-disable-next-line global-require
+    const io = require('./socket').init(http.listen(8080));
+    io.on('connection', socket => {
+      console.log('client connected');
+    });
   })
   .catch(err => {
     console.log('err', err);
