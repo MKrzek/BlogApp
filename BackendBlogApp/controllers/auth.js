@@ -46,7 +46,7 @@ const login = async (req, res, next) => {
 
     if (!isEqual) {
       const error = new Error('Wrong Password');
-      error.statusCode(401);
+      error.statusCode = 401;
       throw error;
     }
     const token = jwt.sign(
@@ -72,7 +72,7 @@ const getStatus = async (req, res, next) => {
 
     if (!user) {
       const error = new Error('User not found');
-      error.statusCode(404);
+      error.statusCode = 404;
       throw error;
     }
     console.log('user', user);
@@ -98,7 +98,7 @@ const changeStatus = async (req, res, next) => {
       throw error;
     }
     user.status = status;
-    const result = await user.save();
+    await user.save();
 
     res.status(200).json({ message: 'User status updated' });
   } catch (err) {
