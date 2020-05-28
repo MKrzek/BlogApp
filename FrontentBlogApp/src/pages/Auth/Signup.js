@@ -48,7 +48,7 @@ const Signup = (props) =>{
       };
 
       for (const inputName in updatedForm) {
-        formIsValid = formIsValid && updatedForm[inputName].valid;
+        formIsValid = formIsValid &&  (updatedForm[inputName].valid || false)
 
       }
       updatedForm['formIsValid'] = formIsValid
