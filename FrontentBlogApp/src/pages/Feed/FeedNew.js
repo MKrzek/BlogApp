@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import openSocket from 'socket.io-client'
 import Post from '../../components/Feed/Post/Post';
 import Button from '../../components/Button/Button';
 import FeedEdit from '../../components/Feed/FeedEdit/FeedEditNew';
@@ -60,6 +61,36 @@ catch(err){catchError()}
     },
     [token, postPage, totalPosts, postsLoading, setPosts, setTotalPosts, setPostsLoading, setPostPage, postPage, setError,]
   );
+   //websocket actions
+  const addPost = useCallback(post => {
+    setPosts(prevState => {
+      const updatedPosts = [...prevState]
+      if (postPage === 1) {
+        if (posts.length >= 2) {
+          updatedPosts.pop();
+        }
+        updatedPosts.unshift(post)
+      }
+      setTotalPosts(prevState => prevState + 1)
+      return updatedPosts
+    })
+    return {
+      posts,
+      totalPosts
+    }
+  }, [posts, totalPosts, setPosts, setTotalPosts])
+
+  const updatePosts = useCallback(post => {
+    setPosts(prevState => {
+      const updatedPosts = [...prevState]
+      const updatedPostIndex = updatedPosts.findIndex(p => p._id === post._id)
+      if (updatedPostIndex > -1) {
+         updatedPosts[updatedPostIndex] = post
+      }
+      return updatedPosts
+    })
+    return {posts}
+  }, [posts, setPosts])
 
   useEffect(() => {
     async function fetchData() {
@@ -82,10 +113,26 @@ catch(err){catchError()}
     }
     loadPosts()
     fetchData();
-  }, [token]);
+
+    //websocket setup
+    const socket = openSocket('http://localhost:8080')
+    socket.on('posts', data => {
+      console.log('data', data)
+      if (data.action === "create") {
+        addPost(data.post)
+      }
+      else if (data.action === 'update') {
+        updatePosts(data.post)
+      } else if (data.action === 'delete') {
+        loadPosts()
+      }
+    })
+  }, [token,openSocket]);
+
+
 
   const statusUpdateHandler = async event => {
-    console.log('statussssss', status)
+
     event.preventDefault();
     try {
       const res = await fetch('http://localhost:8080/auth/status', {
@@ -103,8 +150,6 @@ catch(err){catchError()}
       const resData = await res.json();
       console.log(resData);
     }
-
-
       catch (err) { catchError() }
   }
 
@@ -158,7 +203,7 @@ catch(err){catchError()}
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Creating or editing a post failed!');
         }
-        const resData= await  res.json();
+        const resData = await  res.json();
 
         const post = {
           _id: resData.post._id,
@@ -169,24 +214,12 @@ catch(err){catchError()}
           createdAt: resData.post.createdAt,
         };
 
-        let updatedPosts
-        setPosts(prevState => {
-           updatedPosts = [...prevState];
-          if (editPost) {
-            const postIndex = prevState.findIndex(p => p._id === editPost._id);
-            updatedPosts[postIndex] = post;
 
-          } else  {
-            updatedPosts = prevState.concat(post);
-          }
-          return updatedPosts
-        })
         setIsEditing(false);
         setEditPost(null);
         setEditLoading(false);
 
           return {
-            posts,
             isEditing,
             editPost,
             editLoading,
@@ -217,11 +250,9 @@ catch(err){catchError()}
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Deleting a post failed!');
         }
-        const resData = await res.json();
-        setPosts(prevState => prevState.filter(p => p._id !== postId)
-        );
-        setPostsLoading(false);
-        return { posts, postsLoading };
+      const resData = await res.json();
+      loadPosts()
+
       }
       catch(err) {
         console.log(err);
@@ -268,6 +299,7 @@ catch(err){catchError()}
             <Loader />
           </div>
         )}
+        {console.log('posts', posts)}
         {posts.length <= 0 && !postsLoading ? (
           <p style={{ textAlign: 'center' }}>No posts found.</p>
         ) : null}
@@ -279,7 +311,7 @@ catch(err){catchError()}
           lastPage={Math.ceil(totalPosts / 2)}
           currentPage={postPage}
           >
-        {console.log('posts', posts)}
+
       {posts.map(post => <Post
         key={post._id}
         id={post._id}
