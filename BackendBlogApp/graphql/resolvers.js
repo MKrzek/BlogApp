@@ -62,4 +62,37 @@ module.exports = {
     });
     return { token, userId: _id.toString() };
   },
+
+  createPost: async ({ postInput }, req) => {
+    const { title, content, imageUrl } = postInput;
+    const errors = [];
+    if (validator.isEmpty(title) || !validator.isLength(title, { min: 5 })) {
+      errors.push({ message: 'Title is invalid' });
+    }
+    if (
+      validator.isEmpty(content) ||
+      !validator.isLength(content, { min: 5 })
+    ) {
+      errors.push({ message: 'Content is invalid' });
+    }
+    if (errors.length > 0) {
+      const error = new Error('Invalid input');
+      error.data = errors;
+      error.code = 422;
+      throw error;
+    }
+    const post = new Post({
+      title,
+      content,
+      imageUrl,
+    });
+    const createdPost = await post.save();
+    const { _id, createdAt, updatedAt } = createdPost;
+    return {
+      ...createdPost._doc,
+      _id: _id.toString(),
+      createdAt: createdAt.toISOString(),
+      updatedAt: updatedAt.toISOString(),
+    };
+  },
 };
