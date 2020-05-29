@@ -91,7 +91,7 @@ const App = (props) => {
       body: JSON.stringify(graphqlQuery)
     })
       const resData = await res.json();
-      console.log('resData', resData)
+
       if (resData.errors && resData.errors[0].status === 422) {
         throw new Error('Validation failed. Make sure the email address has not been used!')
       }
