@@ -4,11 +4,9 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
 const multer = require('multer');
-const http = require('http').createServer(app);
-// const io = require('socket.io')(http);
-
-const feedRoutes = require('./routes/feed');
-const authRoutes = require('./routes/auth');
+const graphqlHttp = require('express-graphql');
+const graphqlSchema = require('./graphql/schema');
+const graphqlResolver = require('./graphql/resolvers');
 
 // const app = express();
 
@@ -45,11 +43,28 @@ app.use((req, res, next) => {
     'OPTIONS, GET, POST, PUT, PATCH, DELETE'
   );
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
   next();
 });
-
-app.use('/feed', feedRoutes);
-app.use('/auth', authRoutes);
+app.use(
+  '/graphql',
+  graphqlHttp({
+    schema: graphqlSchema,
+    rootValue: graphqlResolver,
+    graphiql: true,
+    customFormatErrorFn(err) {
+      if (!err.originalError) {
+        return err;
+      }
+      const { data } = err.originalError;
+      const message = err.message || 'An error occurred';
+      const code = err.originalError.code || 500;
+      return { message, code, data };
+    },
+  })
+);
 
 app.use((err, req, res, next) => {
   console.log(err);
@@ -71,12 +86,7 @@ mongoose
   .then(() => {
     console.log('connected to Mongo');
 
-    // http.listen(8080);
-    // eslint-disable-next-line global-require
-    const io = require('./socket').init(http.listen(8080));
-    io.on('connection', socket => {
-      console.log('client connected');
-    });
+    app.listen(8080);
   })
   .catch(err => {
     console.log('err', err);
