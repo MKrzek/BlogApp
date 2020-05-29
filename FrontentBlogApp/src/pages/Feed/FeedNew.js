@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import openSocket from 'socket.io-client'
+
 import Post from '../../components/Feed/Post/Post';
 import Button from '../../components/Button/Button';
 import FeedEdit from '../../components/Feed/FeedEdit/FeedEditNew';
@@ -41,56 +41,49 @@ const Feed = ({ token }) => {
         page--;
         setPostPage(page);
       }
-      try {
-        const res = await fetch(`http://localhost:8080/feed/posts?page=${page}`, {
-          headers: {
-            Authorization: `Bearer${' '}${token}`
+      const graphqlQuery = {
+        query: `
+          {
+            getPosts{
+              posts{
+                  _id
+                  title
+                  content
+                  imageUrl
+                  creator{
+                    name
+                  }
+                  createdAt
+              }
+              totalPosts
+            }
           }
+        `
+      }
+      try {
+        const res = await fetch(`http://localhost:8080/graphql`, {
+          method:"POST",
+          headers: {
+            Authorization: `Bearer${' '}${token}`,
+            'Content-Type': "application/json"
+
+          },
+          body: JSON.stringify(graphqlQuery)
         })
-
-        if (res.status !== 200) {
-          throw new Error('Failed to fetch posts.');
-        }
         const resData = await res.json();
+        if (resData.errors) {
+          throw new Error('Could not get posts')
+        }
 
-  setPosts(prevState => resData.posts.map(post => ({ ...post, imageUrl: post.imageUrl })));
-  setTotalPosts(resData.totalItems);
+  setPosts(prevState => resData.data.getPosts.posts.map(post => ({ ...post, imageUrl: post.imageUrl })));
+  setTotalPosts(resData.data.getPosts.totalPosts);
   setPostsLoading(false);
 }
 catch(err){catchError()}
     },
     [token, postPage, totalPosts, postsLoading, setPosts, setTotalPosts, setPostsLoading, setPostPage, postPage, setError,]
   );
-   //websocket actions
-  const addPost = useCallback(post => {
-    setPosts(prevState => {
-      const updatedPosts = [...prevState]
-      if (postPage === 1) {
-        if (posts.length >= 2) {
-          updatedPosts.pop();
-        }
-        updatedPosts.unshift(post)
-      }
-      setTotalPosts(prevState => prevState + 1)
-      return updatedPosts
-    })
-    return {
-      posts,
-      totalPosts
-    }
-  }, [posts, totalPosts, setPosts, setTotalPosts])
 
-  const updatePosts = useCallback(post => {
-    setPosts(prevState => {
-      const updatedPosts = [...prevState]
-      const updatedPostIndex = updatedPosts.findIndex(p => p._id === post._id)
-      if (updatedPostIndex > -1) {
-         updatedPosts[updatedPostIndex] = post
-      }
-      return updatedPosts
-    })
-    return {posts}
-  }, [posts, setPosts])
 
   useEffect(() => {
     async function fetchData() {
@@ -114,20 +107,8 @@ catch(err){catchError()}
     loadPosts()
     fetchData();
 
-    //websocket setup
-    const socket = openSocket('http://localhost:8080')
-    socket.on('posts', data => {
-      console.log('data', data)
-      if (data.action === "create") {
-        addPost(data.post)
-      }
-      else if (data.action === 'update') {
-        updatePosts(data.post)
-      } else if (data.action === 'delete') {
-        loadPosts()
-      }
-    })
-  }, [token,openSocket]);
+
+  }, [token]);
 
 
 
@@ -177,8 +158,7 @@ catch(err){catchError()}
   };
 
   const finishEditHandler = async ({ title, content, image }) => {
-
-
+    console.log('ssssss', title, content, image)
     setEditLoading(true);
     // Set up data (with image!)
     const formData = new FormData()
@@ -186,40 +166,68 @@ catch(err){catchError()}
     formData.append('content', content)
     formData.append('image', image)
     console.log('edit-state', editPost)
-    let url = 'http://localhost:8080/feed/post';
-    let method = 'POST';
-    if (editPost) {
-      url = `http://localhost:8080/feed/post/${editPost._id}`;
-      method = "PUT"
+
+    let graphqlQuery = {
+      query: `
+        mutation{createPost(postInput:
+          {title:"${title}",
+           content:"${content}",
+           imageUrl:"someURL"}){
+          _id
+          title
+          content
+          imageUrl
+          creator {
+            name
+          }
+          createdAt
+        }
+      }
+      `
     }
     try{
-    const res = await fetch(url, {
-      method,
-      body: formData,
+    const res = await fetch('http://localhost:8080/graphql', {
+      method:"POST",
+      body: JSON.stringify(graphqlQuery),
       headers: {
-        Authorization: `Bearer${' '}${token}`
+        Authorization: `Bearer${' '}${token}`,
+        'Content-Type': 'application/json'
       }
     })
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error('Creating or editing a post failed!');
-        }
-        const resData = await  res.json();
+      const resData = await res.json();
+      console.log('resData-created-post', resData)
+
+      if (resData.errors && resData.errors[0].status === 422) {
+        throw new Error('Validation failed. Make sure the email address has not been used!')
+      }
+      if (resData.errors) {
+        throw new Error('Something went wrong when creating the post!')
+      }
 
         const post = {
-          _id: resData.post._id,
-          title: resData.post.title,
-          image: resData.post.imageUrl,
-          content: resData.post.content,
-          creator: resData.post.creator,
-          createdAt: resData.post.createdAt,
+          _id: resData.data.createPost._id,
+          title: resData.data.createPost.title,
+          image: resData.data.createPost.imageUrl,
+          content: resData.data.createPost.content,
+          creator: resData.data.createPost.creator,
+          createdAt: resData.data.createPost.createdAt,
         };
-
-
+      setPosts(prevState => {
+        const updatedState = [...prevState]
+        if (editPost) {
+          const postIndex = prevState.findIndex(p => p._id === editPost._id)
+          updatedState[postIndex] = post
+        } else {
+          updatedState.unshift(post)
+        }
+        return updatedState
+        })
         setIsEditing(false);
         setEditPost(null);
         setEditLoading(false);
 
-          return {
+      return {
+            posts,
             isEditing,
             editPost,
             editLoading,
