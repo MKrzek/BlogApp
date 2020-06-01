@@ -295,6 +295,7 @@ catch(err){catchError()}
           const postIndex = prevState.findIndex(p => p._id === editPost._id)
           updatedState[postIndex] = post
         } else {
+          setTotalPosts(prevState=>prevState +1)
           if (prevState.length >= 2) {
             updatedState.pop()
           }
@@ -306,11 +307,13 @@ catch(err){catchError()}
         setEditPost(null);
         setEditLoading(false);
 
+
       return {
             posts,
             isEditing,
             editPost,
             editLoading,
+            totalPosts
           };
       }
       catch(err) {
