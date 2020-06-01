@@ -41,7 +41,7 @@ const Login = ({ loading, onLogin })=> {
        };
      let formIsValid = true;
      for (const inputName in updatedForm) {
-         console.log('inputName', inputName, updatedForm[inputName].valid)
+
        formIsValid = formIsValid &&  (updatedForm[inputName].valid ||false)
      }
        updatedForm['formIsValid']= formIsValid
