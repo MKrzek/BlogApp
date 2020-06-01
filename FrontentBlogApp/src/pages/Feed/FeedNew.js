@@ -87,22 +87,32 @@ catch(err){catchError()}
 
   useEffect(() => {
     async function fetchData() {
-      await fetch('http://localhost:8080/auth/status', {
-        headers: {
-          Authorization: `Bearer${' '}${token}`
-        }})
-        .then(res => {
-          if (res.status !== 200) {
-            throw new Error('Failed to fetch user status.');
+      const graphqlQuery = {
+        query: `
+          {
+            user{
+              status
+            }
           }
-          return res.json();
+        `
+      }
+      try {
+        const res = await fetch('http://localhost:8080/graphql', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer${' '}${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(graphqlQuery)
+        })
 
-        })
-        .then(resData => {
-          console.log('status', resData)
-          setStatus(resData.status);
-        })
-        .catch(catchError);
+        const resData = await res.json();
+        if (resData.errors) {
+          throw new Error('Failed to fetch user status!')
+        }
+        setStatus(resData.data.user.status);
+      }
+      catch(err){ catchError() };
     }
     loadPosts()
     fetchData();
@@ -110,28 +120,34 @@ catch(err){catchError()}
 
   }, [token]);
 
-
-
   const statusUpdateHandler = async event => {
-
     event.preventDefault();
+    const graphqlQuery = {
+      query: `
+        mutation{
+          updateStatus(status: "${status}"){
+            status
+          }
+      }
+      `
+    }
+
     try {
-      const res = await fetch('http://localhost:8080/auth/status', {
-        method: "PUT",
+      const res = await fetch('http://localhost:8080/graphql', {
+        method: "POST",
         headers: {
           'Content-Type': "application/json",
           Authorization: `Bearer${' '}${token}`,
         },
-        body: JSON.stringify({ status })
+        body: JSON.stringify(graphqlQuery)
       })
 
-      if (res.status !== 200 && res.status !== 201) {
-        throw new Error("Can't update status!");
-      }
       const resData = await res.json();
-      console.log(resData);
+      if (resData.errors) {
+        throw new Error('Failed to update user status!')
+      }
     }
-      catch (err) { catchError() }
+    catch (err) { catchError() }
   }
 
   const newPostHandler = () => {
@@ -139,8 +155,7 @@ catch(err){catchError()}
   };
 
   const startEditPostHandler = postId => {
-
-    setEditPost(prevState => ({...posts.find(p => p._id === postId) }
+    setEditPost(prevState => ({...posts.find(p => p._id === postId)}
       ))
     setIsEditing(true);
     setPosts(posts)
@@ -163,7 +178,6 @@ catch(err){catchError()}
     const formData = new FormData()
     formData.append('image', image)
     if (editPost) {
-
       formData.append('oldPath', editPost.imagePath)
     }
 
@@ -204,7 +218,6 @@ catch(err){catchError()}
       console.log('editPOst', editPost._id)
       graphqlQuery = {
         query: `
-
             mutation{
               updatePost(
                 id: "${editPost._id}",
@@ -224,12 +237,11 @@ catch(err){catchError()}
                 createdAt
            }
             }
-
         `
       }
     }
 
-    try{
+    try {
     const res = await fetch('http://localhost:8080/graphql', {
       method:"POST",
       body: JSON.stringify(graphqlQuery),
@@ -239,7 +251,6 @@ catch(err){catchError()}
       }
     })
       const resData = await res.json();
-      console.log('resData-updaeting', resData)
 
       if (resData.errors && resData.errors[0].status === 422) {
         throw new Error('Validation failed. Make sure the email address has not been used!')
@@ -295,12 +306,10 @@ catch(err){catchError()}
   };
 
   const statusInputChangeHandler = (input, value) => {
-    console.log('status', value)
     setStatus(value);
   };
 
   const deletePostHandler = async postId => {
-
     setPostsLoading(true);
     const graphqlQuery = {
       query: `
@@ -318,17 +327,15 @@ catch(err){catchError()}
       },
       body: JSON.stringify(graphqlQuery)
     })
-
       const resData = await res.json();
-
       if (resData.errors) {
         throw new Error('Deleting the post failed')
       }
       loadPosts()
       }
-      catch(err) {
-        console.log(err);
-        setPostsLoading(false);
+    catch(err) {
+      console.log(err);
+      setPostsLoading(false);
       };
   };
 
