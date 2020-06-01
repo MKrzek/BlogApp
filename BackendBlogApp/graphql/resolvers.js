@@ -3,6 +3,7 @@ const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Post = require('../models/post');
+const clearImage = require('../utils/removeImage');
 
 module.exports = {
   createUser: async (args, req) => {
@@ -152,7 +153,7 @@ module.exports = {
       error.code = 404;
       throw error;
     }
-    console.log('SINGEL+++pstssss', post);
+
     return {
       ...post._doc,
       _id: post._id.toString(),
@@ -161,7 +162,6 @@ module.exports = {
     };
   },
   updatePost: async ({ id, postInput }, req) => {
-    console.log('updattttttt', id, postInput);
     if (!req.isAuth) {
       const error = new Error('Not authenticated');
       error.code = 401;
@@ -209,5 +209,31 @@ module.exports = {
       createdAt: updatedPost.createdAt.toISOString(),
       updatedAt: updatedPost.updatedAt.toISOString(),
     };
+  },
+  deletePost: async ({ id }, req) => {
+    console.log(id);
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated');
+      error.code = 401;
+      throw error;
+    }
+    const post = await Post.findById(id);
+    console.log('delete-find', post);
+    if (!post) {
+      const error = new Error('No post found');
+      error.code = 404;
+      throw error;
+    }
+    if (post.creator.toString() !== req.userId.toString()) {
+      const error = new Error('Not authorized!');
+      error.code = 403;
+      throw error;
+    }
+    clearImage(post.imageUrl);
+    await Post.findByIdAndRemove(id);
+    const user = await User.findById(req.userId);
+    user.posts.pull(id);
+    await user.save();
+    return true;
   },
 };
