@@ -44,7 +44,7 @@ const Feed = ({ token }) => {
       const graphqlQuery = {
         query: `
           {
-            getPosts{
+            getPosts(page: ${page}){
               posts{
                   _id
                   title
@@ -75,7 +75,7 @@ const Feed = ({ token }) => {
           throw new Error('Could not get posts')
         }
 
-  setPosts(prevState => resData.data.getPosts.posts.map(post => ({ ...post, imageUrl: post.imageUrl })));
+  setPosts(prevState => resData.data.getPosts.posts.map(post => ({ ...post, imagePath: post.imageUrl })));
   setTotalPosts(resData.data.getPosts.totalPosts);
   setPostsLoading(false);
 }
@@ -120,7 +120,7 @@ catch(err){catchError()}
         method: "PUT",
         headers: {
           'Content-Type': "application/json",
-          Authorization: `Bearer${' '}${token}`
+          Authorization: `Bearer${' '}${token}`,
         },
         body: JSON.stringify({ status })
       })
@@ -158,21 +158,35 @@ catch(err){catchError()}
   };
 
   const finishEditHandler = async ({ title, content, image }) => {
-    console.log('ssssss', title, content, image)
     setEditLoading(true);
     // Set up data (with image!)
     const formData = new FormData()
-    formData.append('title', title)
-    formData.append('content', content)
     formData.append('image', image)
-    console.log('edit-state', editPost)
+    if (editPost) {
+
+      formData.append('oldPath', editPost.imagePath)
+    }
+
+    const res = await fetch('http://localhost:8080/post-image', {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer${' '}${token}`,
+
+      },
+      body: formData
+    })
+    const response = await res.json()
+
+    const {filePath } = response
 
     let graphqlQuery = {
       query: `
-        mutation{createPost(postInput:
-          {title:"${title}",
+        mutation {
+            createPost(postInput:
+             {title:"${title}",
            content:"${content}",
-           imageUrl:"someURL"}){
+           imageUrl:"${filePath}"})
+           {
           _id
           title
           content
@@ -195,7 +209,6 @@ catch(err){catchError()}
       }
     })
       const resData = await res.json();
-      console.log('resData-created-post', resData)
 
       if (resData.errors && resData.errors[0].status === 422) {
         throw new Error('Validation failed. Make sure the email address has not been used!')
@@ -211,6 +224,7 @@ catch(err){catchError()}
           content: resData.data.createPost.content,
           creator: resData.data.createPost.creator,
           createdAt: resData.data.createPost.createdAt,
+          imagePath: resData.data.createPost.imageUrl
         };
       setPosts(prevState => {
         const updatedState = [...prevState]
@@ -218,6 +232,7 @@ catch(err){catchError()}
           const postIndex = prevState.findIndex(p => p._id === editPost._id)
           updatedState[postIndex] = post
         } else {
+          updatedState.pop()
           updatedState.unshift(post)
         }
         return updatedState
@@ -258,7 +273,7 @@ catch(err){catchError()}
         if (res.status !== 200 && res.status !== 201) {
           throw new Error('Deleting a post failed!');
         }
-      const resData = await res.json();
+      await res.json();
       loadPosts()
 
       }
@@ -307,7 +322,6 @@ catch(err){catchError()}
             <Loader />
           </div>
         )}
-        {console.log('posts', posts)}
         {posts.length <= 0 && !postsLoading ? (
           <p style={{ textAlign: 'center' }}>No posts found.</p>
         ) : null}
