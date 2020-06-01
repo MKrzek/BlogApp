@@ -54,11 +54,10 @@ app.use((req, res, next) => {
 app.use(isAuth);
 
 app.put('/post-image', (req, res, next) => {
-  console.log('isAuth', req.isAuth);
   if (!req.isAuth) {
     throw new Error('Not authenticated');
   }
-  console.log('req.file', req.file);
+
   if (!req.file) {
     return res.status(200).json({ message: 'No file provided' });
   }
