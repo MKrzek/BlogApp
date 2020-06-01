@@ -43,8 +43,8 @@ const Feed = ({ token }) => {
       }
       const graphqlQuery = {
         query: `
-          {
-            getPosts(page: ${page}){
+          query FetchPosts($page: Int){
+            getPosts(page: $page){
               posts{
                   _id
                   title
@@ -58,7 +58,10 @@ const Feed = ({ token }) => {
               totalPosts
             }
           }
-        `
+        `,
+        variables: {
+          page: page
+        }
       }
       try {
         const res = await fetch(`http://localhost:8080/graphql`, {
@@ -124,12 +127,15 @@ catch(err){catchError()}
     event.preventDefault();
     const graphqlQuery = {
       query: `
-        mutation{
-          updateStatus(status: "${status}"){
+        mutation UpdateStatus($status: String!){
+          updateStatus(status: $string){
             status
           }
       }
-      `
+      `,
+      variables: {
+        status
+      }
     }
 
     try {
@@ -191,15 +197,15 @@ catch(err){catchError()}
     })
     const response = await res.json()
 
-    const {filePath } = response
+    const filePath  = response.filePath || 'undefined'
 
     let graphqlQuery = {
       query: `
-        mutation {
+        mutation CreatePost($title: String!, $content: String!, $filePath:String!) {
             createPost(postInput:
-             {title:"${title}",
-           content:"${content}",
-           imageUrl:"${filePath}"})
+             { title:$title,
+              content:$content,
+              imageUrl:$filePath})
            {
           _id
           title
@@ -211,20 +217,25 @@ catch(err){catchError()}
           createdAt
         }
       }
-      `
+      `,
+      variables: {
+        title,
+        content,
+        filePath
+      }
     }
 
     if (editPost) {
-      console.log('editPOst', editPost._id)
       graphqlQuery = {
         query: `
-            mutation{
+            mutation UpdatePost($id: ID!, $title:String!, $content:String!, $filePath: String!){
               updatePost(
-                id: "${editPost._id}",
-                postInput:
-                {title:"${title}",
-                content:"${content}",
-                imageUrl:"${filePath}"}
+                id: $id,
+                postInput:{
+                  title:$title,
+                  content:$content,
+                  imageUrl:$filePath
+                }
                )
               {
                 _id
@@ -237,7 +248,13 @@ catch(err){catchError()}
                 createdAt
            }
             }
-        `
+        `,
+        variables: {
+          id: editPost._id,
+          title,
+          content,
+          filePath
+        }
       }
     }
 
@@ -313,10 +330,13 @@ catch(err){catchError()}
     setPostsLoading(true);
     const graphqlQuery = {
       query: `
-        mutation {
-           deletePost(id: "${postId}")
+        mutation DeletePost($id: ID!) {
+           deletePost(id: $id)
         }
-      `
+      `,
+      variables: {
+        id: postId
+      }
     }
     try{
     const res = await fetch(`http://localhost:8080/graphql`, {

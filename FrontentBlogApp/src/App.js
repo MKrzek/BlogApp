@@ -70,16 +70,22 @@ const App = (props) => {
 
 
   const loginHandler = async (event, { email, password }) => {
-    console.log('looooo', email, password)
     event.preventDefault();
     setAuthLoading(true);
     const graphqlQuery = {
-      query:`{
-        login(email:"${email}", password:"${password}"){
+      query:`
+        query Login($email: String!, $password:String!){
+          login(email:$email, password:$password){
           token
           userId
         }
-      }`
+
+      }
+      `,
+      variables: {
+        email,
+        password
+      }
     }
     try {
 
@@ -127,14 +133,26 @@ const App = (props) => {
     setAuthLoading(true);
     const graphqlQuery = {
       query: `
-        mutation{createUser(userInput:{email:"${email.value}", name:"${name.value}", password:"${password.value}"}){
+        mutation CreateUser($email:String!, $name:String!, $password: String!){
+           createUser(
+             userInput:
+               { email:$email,
+                 name:$name,
+                 password:$password)
+                {
           _id
           email
         }
       }
-    `}
+    `,
+      variables: {
+        email: email.value,
+        name: name.value,
+        password: password.value
+      }
+    }
 
-   console.log('gappp', graphqlQuery)
+
   try {
     const res = await fetch('http://localhost:8080/graphql', {
       method: 'POST',
@@ -143,14 +161,13 @@ const App = (props) => {
     })
 
     const resData = await res.json();
-    console.log('resData', resData)
+
     if (resData.errors && resData.errors[0].status === 422) {
       throw new Error('Validation failed. Make sure the email address has not been used!')
     }
     if (resData.errors) {
       throw new Error('User creation failed!')
     }
-      console.log(resData);
       setIsAuth(false)
       setAuthLoading(false)
       props.history.replace('/');

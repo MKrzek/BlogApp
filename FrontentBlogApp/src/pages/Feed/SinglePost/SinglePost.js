@@ -20,18 +20,22 @@ const SinglePost = ({
 
   useEffect(() => {
     const graphqlQuery ={
-      query:`{
-        getSinglePost(id: "${postId}"){
-          title
-          content
-          imageUrl
-          creator{
-            name
-          }
-          createdAt
-        }
+      query:`
+        query GetPost($id:Int!){
+         getSinglePost(id:$id){
+            title
+            content
+            imageUrl
+            creator{
+              name
+            }
+            createdAt
+         }
       }
-      `
+      `,
+      variables: {
+        id: postId
+      }
     }
     async function FetchData() {
       const res = await fetch('http://localhost:8080/graphql', {
@@ -43,7 +47,7 @@ const SinglePost = ({
         body: JSON.stringify(graphqlQuery)
       })
         const resData = await res.json();
-        console.log('res_SiNGLE_POST', resData)
+
       if (resData.errors) {
            throw new Error('Failed to fetch single post')
          }
