@@ -48,7 +48,7 @@ module.exports = {
       error.code = 401;
       throw error;
     }
-    console.log('user', user);
+
     const { _id, email, password } = user;
     const isEqual = await bcrypt.compare(args.password, password);
     if (!isEqual) {
@@ -64,8 +64,6 @@ module.exports = {
   },
 
   createPost: async ({ postInput }, req) => {
-    console.log('reqqqq', req);
-    console.log('xxxxxpostInput', postInput, req.userId);
     if (!req.isAuth) {
       const error = new Error('Not authenticated');
       error.code = 401;
@@ -89,7 +87,7 @@ module.exports = {
       throw error;
     }
     const user = await User.findById(req.userId);
-    console.log('user', user);
+
     if (!user) {
       const error = new Error('User not found');
       error.data = errors;
@@ -104,7 +102,7 @@ module.exports = {
     });
 
     const createdPost = await post.save();
-    console.log('createdPost', createdPost);
+
     user.posts.push(createdPost);
     await user.save();
     const { _id, createdAt, updatedAt } = createdPost;
@@ -115,15 +113,21 @@ module.exports = {
       updatedAt: updatedAt.toISOString(),
     };
   },
-  getPosts: async (args, req) => {
+  getPosts: async ({ page }, req) => {
     if (!req.isAuth) {
       const error = new Error('Not authenticated');
       error.code = 401;
       throw error;
     }
+    if (!page) {
+      page = 1;
+    }
+    const perPage = 2;
     const totalPosts = await Post.find().countDocuments();
     const posts = await Post.find()
       .sort({ createdAt: -1 })
+      .skip((page - 1) * perPage)
+      .limit(perPage)
       .populate('creator');
 
     return {
@@ -134,6 +138,26 @@ module.exports = {
         updatedAt: p.updatedAt.toISOString(),
       })),
       totalPosts,
+    };
+  },
+  getSinglePost: async ({ id }, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated');
+      error.code = 401;
+      throw error;
+    }
+    const post = await await Post.findById(id).populate('creator');
+    if (!post) {
+      const error = new Error('No posts found');
+      error.code = 404;
+      throw error;
+    }
+    console.log('SINGEL+++pstssss', post);
+    return {
+      ...post._doc,
+      _id: post._id.toString(),
+      createdAt: post.createdAt.toISOString(),
+      updatedAt: post.updatedAt.toISOString(),
     };
   },
 };
