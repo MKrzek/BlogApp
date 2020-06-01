@@ -19,29 +19,44 @@ const SinglePost = ({
   });
 
   useEffect(() => {
-    async function FetchData() {
-      await fetch(`http://localhost:8080/feed/post/${postId}`, {
-        headers: {
-          Authorization: `Bearer${' '}${token}`
-        }})
-        .then(res => {
-          if (res.status !== 200) {
-            throw new Error('Failed to fetch status');
+    const graphqlQuery ={
+      query:`{
+        getSinglePost(id: "${postId}"){
+          title
+          content
+          imageUrl
+          creator{
+            name
           }
-          return res.json();
-        })
-        .then(resData => {
+          createdAt
+        }
+      }
+      `
+    }
+    async function FetchData() {
+      const res = await fetch('http://localhost:8080/graphql', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer${' '}${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(graphqlQuery)
+      })
+        const resData = await res.json();
+        console.log('res_SiNGLE_POST', resData)
+      if (resData.errors) {
+           throw new Error('Failed to fetch single post')
+         }
 
           setPostValues({
-            title: resData.post.title,
-            author: resData.post.name,
-            image: `http://localhost:8080/${resData.post.imageUrl}`,
-            date: new Date(resData.post.createdAt).toLocaleDateString('en-US'),
-            content: resData.post.content,
+            title: resData.data.getSinglePost.title,
+            author: resData.data.getSinglePost.name,
+            image: `http://localhost:8080/${resData.data.getSinglePost.imageUrl}`,
+            date: new Date(resData.data.getSinglePost.createdAt).toLocaleDateString('en-US'),
+            content: resData.data.getSinglePost.content,
           });
-        });
-    }
 
+    }
     FetchData();
   }, [postId]);
 
