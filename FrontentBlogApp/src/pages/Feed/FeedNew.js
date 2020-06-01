@@ -267,7 +267,9 @@ catch(err){catchError()}
           const postIndex = prevState.findIndex(p => p._id === editPost._id)
           updatedState[postIndex] = post
         } else {
-          updatedState.pop()
+          if (prevState.length >= 2) {
+            updatedState.pop()
+          }
           updatedState.unshift(post)
         }
         return updatedState
@@ -298,19 +300,31 @@ catch(err){catchError()}
   };
 
   const deletePostHandler = async postId => {
-    setPostsLoading(true);
-    try{
-    const res = await fetch(`http://localhost:8080/feed/post/${postId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer${' '}${token}`
-      }})
-        if (res.status !== 200 && res.status !== 201) {
-          throw new Error('Deleting a post failed!');
-        }
-      await res.json();
-      loadPosts()
 
+    setPostsLoading(true);
+    const graphqlQuery = {
+      query: `
+        mutation {
+           deletePost(id: "${postId}")
+        }
+      `
+    }
+    try{
+    const res = await fetch(`http://localhost:8080/graphql`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer${' '}${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(graphqlQuery)
+    })
+
+      const resData = await res.json();
+
+      if (resData.errors) {
+        throw new Error('Deleting the post failed')
+      }
+      loadPosts()
       }
       catch(err) {
         console.log(err);
