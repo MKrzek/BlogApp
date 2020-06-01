@@ -211,14 +211,13 @@ module.exports = {
     };
   },
   deletePost: async ({ id }, req) => {
-    console.log(id);
     if (!req.isAuth) {
       const error = new Error('Not authenticated');
       error.code = 401;
       throw error;
     }
     const post = await Post.findById(id);
-    console.log('delete-find', post);
+
     if (!post) {
       const error = new Error('No post found');
       error.code = 404;
@@ -235,5 +234,43 @@ module.exports = {
     user.posts.pull(id);
     await user.save();
     return true;
+  },
+
+  user: async (args, req) => {
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated');
+      error.code = 401;
+      throw error;
+    }
+    const user = await User.findById(req.userId);
+    if (!user) {
+      const error = new Error('No user found');
+      error.code = 404;
+      throw error;
+    }
+    return {
+      ...user._doc,
+      _id: user._id.toString(),
+    };
+  },
+  updateStatus: async ({ status }, req) => {
+    console.log(status);
+    if (!req.isAuth) {
+      const error = new Error('Not authenticated');
+      error.code = 401;
+      throw error;
+    }
+    const user = await User.findById(req.userId);
+    if (!user) {
+      const error = new Error('No user found');
+      error.code = 404;
+      throw error;
+    }
+    user.status = status;
+    await user.save();
+    return {
+      ...user._doc,
+      _id: user._id.toString(),
+    };
   },
 };
