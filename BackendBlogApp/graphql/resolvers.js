@@ -168,7 +168,7 @@ module.exports = {
       throw error;
     }
     const post = await Post.findById(id).populate('creator');
-    console.log('found post', post);
+
     if (!post) {
       const error = new Error('No post found');
       error.code = 404;
@@ -254,7 +254,6 @@ module.exports = {
     };
   },
   updateStatus: async ({ status }, req) => {
-    console.log(status);
     if (!req.isAuth) {
       const error = new Error('Not authenticated');
       error.code = 401;
