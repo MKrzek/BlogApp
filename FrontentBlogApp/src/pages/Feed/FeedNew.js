@@ -199,6 +199,36 @@ catch(err){catchError()}
       }
       `
     }
+
+    if (editPost) {
+      console.log('editPOst', editPost._id)
+      graphqlQuery = {
+        query: `
+
+            mutation{
+              updatePost(
+                id: "${editPost._id}",
+                postInput:
+                {title:"${title}",
+                content:"${content}",
+                imageUrl:"${filePath}"}
+               )
+              {
+                _id
+                title
+                content
+                imageUrl
+                creator {
+                  name
+                }
+                createdAt
+           }
+            }
+
+        `
+      }
+    }
+
     try{
     const res = await fetch('http://localhost:8080/graphql', {
       method:"POST",
@@ -209,6 +239,7 @@ catch(err){catchError()}
       }
     })
       const resData = await res.json();
+      console.log('resData-updaeting', resData)
 
       if (resData.errors && resData.errors[0].status === 422) {
         throw new Error('Validation failed. Make sure the email address has not been used!')
@@ -216,15 +247,19 @@ catch(err){catchError()}
       if (resData.errors) {
         throw new Error('Something went wrong when creating the post!')
       }
+      let resDataType = 'createPost'
+      if (editPost) {
+        resDataType = 'updatePost'
+      }
 
         const post = {
-          _id: resData.data.createPost._id,
-          title: resData.data.createPost.title,
-          image: resData.data.createPost.imageUrl,
-          content: resData.data.createPost.content,
-          creator: resData.data.createPost.creator,
-          createdAt: resData.data.createPost.createdAt,
-          imagePath: resData.data.createPost.imageUrl
+          _id: resData.data[resDataType]._id,
+          title: resData.data[resDataType].title,
+          image: resData.data[resDataType].imageUrl,
+          content: resData.data[resDataType].content,
+          creator: resData.data[resDataType].creator,
+          createdAt: resData.data[resDataType].createdAt,
+          imagePath: resData.data[resDataType].imageUrl
         };
       setPosts(prevState => {
         const updatedState = [...prevState]
