@@ -1,3 +1,4 @@
+const express = require('express');
 const app = require('express')();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -62,6 +63,16 @@ app.use((err, req, res, next) => {
   const { data } = err;
   res.status(statusCode).json({ message, data });
 });
+if (process.env.NODE_ENV === 'production') {
+  // Express will serve production assests like main.js file
+  app.use(express.static('FrontentBlogApp/build'));
+  // Express will serve index.html if the route does not exist
+  app.get('*', (req, res) => {
+    res.sendFile(
+      path.resolve(__dirname, 'FrontentBlogApp', 'build', 'index.html')
+    );
+  });
+}
 
 mongoose
   .connect(
