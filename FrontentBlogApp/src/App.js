@@ -89,7 +89,7 @@ const App = (props) => {
     }
     try {
 
-      const res = await fetch('https://backend-blog-app.mkrzek.now.sh/graphql', {
+      const res = await fetch('/graphql', {
       method: 'POST',
       headers: {
         'Content-Type': "application/json"
@@ -154,7 +154,7 @@ const App = (props) => {
 
 
   try {
-    const res = await fetch('https://backend-blog-app.mkrzek.now.sh/graphql', {
+    const res = await fetch('/graphql', {
       method: 'POST',
       headers: { 'Content-Type': "application/json" },
       body: JSON.stringify(graphqlQuery )
