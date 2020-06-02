@@ -2,7 +2,9 @@
   "name": "node-complete-social-network-prep",
   "version": "0.1.0",
   "private": true,
+  "proxy": "http://localhost:8080/",
   "dependencies": {
+    "axios": "^0.19.2",
     "lodash.isequal": "^4.5.0",
     "react": "^16.5.2",
     "react-dom": "^16.5.2",
