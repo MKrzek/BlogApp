@@ -64,7 +64,7 @@ const Feed = ({ token }) => {
         }
       }
       try {
-        const res = await fetch(`http://localhost:8080/graphql`, {
+        const res = await fetch('/graphql', {
           method:"POST",
           headers: {
             Authorization: `Bearer${' '}${token}`,
@@ -100,7 +100,7 @@ catch(err){catchError()}
         `
       }
       try {
-        const res = await fetch('http://localhost:8080/graphql', {
+        const res = await fetch('/graphql', {
           method: 'POST',
           headers: {
             Authorization: `Bearer${' '}${token}`,
@@ -139,7 +139,7 @@ catch(err){catchError()}
     }
 
     try {
-      const res = await fetch('http://localhost:8080/graphql', {
+      const res = await fetch('/graphql', {
         method: "POST",
         headers: {
           'Content-Type': "application/json",
@@ -174,30 +174,27 @@ catch(err){catchError()}
 
   const cancelEditHandler = () => {
     setIsEditing(false);
-
     setEditPost(null);
   };
 
   const finishEditHandler = async ({ title, content, image }) => {
     setEditLoading(true);
     // Set up data (with image!)
+    console.log('edddd-image', editPost, image)
     const formData = new FormData()
-    formData.append('image', image)
+    formData.append('file', image)
+    formData.append('upload_preset', 'sickfits')
     if (editPost) {
       formData.append('oldPath', editPost.imagePath)
     }
 
-    const res = await fetch('http://localhost:8080/post-image', {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer${' '}${token}`,
-
-      },
+    const res = await fetch('https://api.cloudinary.com/v1_1/dmss88pfo/image/upload', {
+      method: 'POST',
       body: formData
     })
     const response = await res.json()
 
-    const filePath  = response.filePath || 'undefined'
+    const filePath  = response.secure_url || 'undefined'
 
     let graphqlQuery = {
       query: `
@@ -259,7 +256,7 @@ catch(err){catchError()}
     }
 
     try {
-    const res = await fetch('http://localhost:8080/graphql', {
+    const res = await fetch('/graphql', {
       method:"POST",
       body: JSON.stringify(graphqlQuery),
       headers: {
@@ -342,7 +339,7 @@ catch(err){catchError()}
       }
     }
     try{
-    const res = await fetch(`http://localhost:8080/graphql`, {
+    const res = await fetch('/graphql', {
       method: "POST",
       headers: {
         Authorization: `Bearer${' '}${token}`,
