@@ -3,7 +3,6 @@ const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 const Post = require('../models/post');
-const clearImage = require('../utils/removeImage');
 
 module.exports = {
   createUser: async (args, req) => {
@@ -228,7 +227,7 @@ module.exports = {
       error.code = 403;
       throw error;
     }
-    clearImage(post.imageUrl);
+
     await Post.findByIdAndRemove(id);
     const user = await User.findById(req.userId);
     user.posts.pull(id);
