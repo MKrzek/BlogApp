@@ -18,13 +18,13 @@ const accessLogStream = fs.createWriteStream(
   path.join(__dirname, 'access.log'),
   { flags: 'a' }
 );
-app.use(helmet());
+// app.use(helmet());
 
 // app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
 app.use(bodyParser.json()); // application/json
 
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin', 'no-cors');
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader(
     'Access-Control-Allow-Methods',
     'OPTIONS, GET, POST, PUT, PATCH, DELETE'
