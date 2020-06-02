@@ -18,16 +18,13 @@ const accessLogStream = fs.createWriteStream(
   path.join(__dirname, 'access.log'),
   { flags: 'a' }
 );
-// app.use(helmet());
+app.use(helmet());
 
 // app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
 app.use(bodyParser.json()); // application/json
 
 app.use((req, res, next) => {
-  res.setHeader(
-    'Access-Control-Allow-Origin',
-    'https://frontent-blog-app.mkrzek.now.sh/*'
-  );
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader(
     'Access-Control-Allow-Methods',
     'OPTIONS, GET, POST, PUT, PATCH, DELETE'
@@ -66,6 +63,21 @@ app.use((err, req, res, next) => {
   const { data } = err;
   res.status(statusCode).json({ message, data });
 });
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('https://frontent-blog-app.mkrzek.now.sh/build'));
+
+  app.get('*', (req, res) => {
+    res.sendFile(
+      path.resolve(
+        __dirname,
+        'https://frontent-blog-app.mkrzek.now.sh',
+        'build',
+        'index.html'
+      )
+    );
+  });
+}
 
 mongoose
   .connect(
