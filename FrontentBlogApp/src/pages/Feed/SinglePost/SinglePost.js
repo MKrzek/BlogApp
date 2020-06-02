@@ -21,7 +21,7 @@ const SinglePost = ({
   useEffect(() => {
     const graphqlQuery ={
       query:`
-        query GetPost($id:Int!){
+        query GetPost($id:ID!){
          getSinglePost(id:$id){
             title
             content
@@ -38,7 +38,7 @@ const SinglePost = ({
       }
     }
     async function FetchData() {
-      const res = await fetch('http://localhost:8080/graphql', {
+      const res = await fetch('/graphql', {
         method: 'POST',
         headers: {
           Authorization: `Bearer${' '}${token}`,
@@ -55,7 +55,7 @@ const SinglePost = ({
           setPostValues({
             title: resData.data.getSinglePost.title,
             author: resData.data.getSinglePost.name,
-            image: `http://localhost:8080/${resData.data.getSinglePost.imageUrl}`,
+            image: resData.data.getSinglePost.imageUrl,
             date: new Date(resData.data.getSinglePost.createdAt).toLocaleDateString('en-US'),
             content: resData.data.getSinglePost.content,
           });
