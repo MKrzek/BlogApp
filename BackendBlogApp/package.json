@@ -8,10 +8,8 @@
   },
   "main": "index.js",
   "scripts": {
-    "FrontentBlogApp": "npm start ../FrontentBlogApp",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon app.js",
-    "heroku-postbuild": "NPM_CONFIG_PRODUCTION=false npm install ../FrontentBlogApp && npm run build  ../FrontentBlogApp"
   },
   "author": "",
   "license": "ISC",
