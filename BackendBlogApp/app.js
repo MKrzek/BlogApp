@@ -1,9 +1,8 @@
-const express = require('express');
 const app = require('express')();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const path = require('path');
-const fs = require('fs');
+const cors = require('cors');
+
 const helmet = require('helmet');
 
 const graphqlHttp = require('express-graphql');
@@ -14,10 +13,7 @@ const keys = require('./config/keys');
 
 // const app = express();
 
-const accessLogStream = fs.createWriteStream(
-  path.join(__dirname, 'access.log'),
-  { flags: 'a' }
-);
+app.use(cors());
 app.use(helmet());
 
 // app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
@@ -63,21 +59,6 @@ app.use((err, req, res, next) => {
   const { data } = err;
   res.status(statusCode).json({ message, data });
 });
-
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static('https://frontent-blog-app.mkrzek.now.sh/build'));
-
-  app.get('*', (req, res) => {
-    res.sendFile(
-      path.resolve(
-        __dirname,
-        'https://frontent-blog-app.mkrzek.now.sh',
-        'build',
-        'index.html'
-      )
-    );
-  });
-}
 
 mongoose
   .connect(
