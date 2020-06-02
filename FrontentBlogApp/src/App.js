@@ -89,7 +89,7 @@ const App = (props) => {
     }
     try {
 
-      const res = await fetch('https://zeit.co/mkrzek/backend-blog-app/gmgwu5siy/graphql', {
+      const res = await fetch('https://backend-blog-app.mkrzek.now.sh/graphql', {
       method: 'POST',
       headers: {
         'Content-Type': "application/json"
@@ -154,7 +154,7 @@ const App = (props) => {
 
 
   try {
-    const res = await fetch('https://zeit.co/mkrzek/backend-blog-app/gmgwu5siy/graphql', {
+    const res = await fetch('https://backend-blog-app.mkrzek.now.sh/graphql', {
       method: 'POST',
       headers: { 'Content-Type': "application/json" },
       body: JSON.stringify(graphqlQuery )
