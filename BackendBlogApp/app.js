@@ -1,42 +1,26 @@
-const express = require('express');
 const app = require('express')();
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
-const multer = require('multer');
+const fs = require('fs');
+const helmet = require('helmet');
+
 const graphqlHttp = require('express-graphql');
 const graphqlSchema = require('./graphql/schema');
 const graphqlResolver = require('./graphql/resolvers');
 const isAuth = require('./middleware/isAuth');
-const clearImage = require('./utils/removeImage');
+const keys = require('./config/keys');
 
 // const app = express();
 
-const fileStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'images');
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${new Date().toISOString()}-${file.originalname}`);
-  },
-});
-
-const fileFilter = (req, file, cb) => {
-  if (
-    file.mimetype === 'image/png' ||
-    file.mimetype === 'image/jpg' ||
-    file.mimetype === 'image/jpeg'
-  ) {
-    cb(null, true);
-  } else {
-    cb(null, false);
-  }
-};
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, 'access.log'),
+  { flags: 'a' }
+);
+app.use(helmet());
 
 // app.use(bodyParser.urlencoded()); // x-www-form-urlencoded <form>
 app.use(bodyParser.json()); // application/json
-app.use(multer({ storage: fileStorage, fileFilter }).single('image'));
-app.use('/images', express.static(path.join(__dirname, 'images')));
 
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -52,22 +36,6 @@ app.use((req, res, next) => {
 });
 
 app.use(isAuth);
-
-app.put('/post-image', (req, res, next) => {
-  if (!req.isAuth) {
-    throw new Error('Not authenticated');
-  }
-
-  if (!req.file) {
-    return res.status(200).json({ message: 'No file provided' });
-  }
-  if (req.body.oldPath) {
-    clearImage(req.body.oldPath);
-  }
-  return res
-    .status(201)
-    .json({ message: 'File stored', filePath: req.file.path });
-});
 
 app.use(
   '/graphql',
@@ -97,8 +65,7 @@ app.use((err, req, res, next) => {
 
 mongoose
   .connect(
-    'mongodb+srv://mkrzek:mkrzek@cluster0-vgofl.mongodb.net/network?retryWrites=true' +
-      '&w=majority',
+    `mongodb+srv://${keys.mongoUser}:${keys.mongoPassword}@cluster0-vgofl.mongodb.net/network?retryWrites=true&w=majority`,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -107,7 +74,7 @@ mongoose
   .then(() => {
     console.log('connected to Mongo');
 
-    app.listen(8080);
+    app.listen(process.env.PORT || 8080);
   })
   .catch(err => {
     console.log('err', err);
